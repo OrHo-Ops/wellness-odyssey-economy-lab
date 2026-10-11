@@ -20,7 +20,7 @@ wheel,wheel_weight_pp_30,26,weight of 100,illustrative,Illustrative stand-in.
 wheel,wheel_weight_pp_50,28,weight of 100,illustrative,Illustrative stand-in.
 wheel,wheel_weight_pp_80,16,weight of 100,illustrative,Illustrative stand-in.
 wheel,wheel_weight_pp_150,7,weight of 100,illustrative,Illustrative stand-in.
-wheel,wheel_weight_free_respin,1,weight of 100,illustrative,Illustrative stand-in. A free respin pays no points and charges no Energy.
+wheel,wheel_weight_free_respin,1,weight of 100,illustrative,"Illustrative weight. The rule is the game's: a free respin pays no points, charges no Energy and is followed by another draw, so the average per paid spin is the per-draw average divided by (1 - respin probability)."
 progression,region_base_cost,1500,Progress Points,verified,Cost of region 1.
 progression,region_cost_multiplier,1.08,ratio,verified,"Each region costs 8% more than the last, rounded to a whole point."
 progression,region_count,7,regions,verified,Regions in the current game. Spinning stops once the last one is complete.

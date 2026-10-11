@@ -62,7 +62,24 @@ What the table says:
 - **Per-visit pricing has a break-even volume.** Each visit contributes $1.75 ($2.00 − $0.25), so a quest needs about 23 visits a month to cover its $40 servicing cost. Below that the game pays to run it.
 - **The hybrid never loses money on a quest** under these inputs and keeps the merchant's cost per visit within a moderate range.
 
-**What a visit costs the game economy.** A quest arrival pays 150 Energy, plus a walking bonus: 26 more if about 1,300 steps, roughly 1 km, are walked on the way. That is about 3.5 spins, or 176 Progress Points under the illustrative reward table the simulation uses. In the simulation, two arrivals a week raise Energy income by 16% for the low-activity profile, 8% for moderate and 7% for high, and bring the median day the seventh region is completed forward by about 6, 2 and 2 days. For the low-activity profile both dates lie past day 28 and are projections. The reward is small enough not to distort pacing, and because it is flat it is worth proportionally more to players who walk less.
+**What quest rewards do to progression.** A quest arrival pays 150 Energy, plus a walking bonus: 26 more if about 1,300 steps, roughly 1 km, are walked on the way. That is 176 Energy, about 3.5 paid spins, or 176 Progress Points under the illustrative reward table the simulation uses. The simulated scenario gives every player two arrivals a week on average, which is an assumption about behaviour. It adds about 50 Energy a day, one extra paid spin, whatever the player's activity level.
+
+| Profile | Energy income per day | Paid spins per day | Median day all seven regions are complete |
+|---|---|---|---|
+| Low · 3,000 steps | 323 → 374 (+16%) | 6.5 → 7.5 | 42\* → 36\*, 6 days earlier |
+| Moderate · 6,000 | 602 → 650 (+8%) | 12.0 → 13.0 | 23 → 21, 2 days earlier |
+| High · 10,000 | 743 → 797 (+7%) | 14.8 → 15.9 | 19 → 17, 2 days earlier |
+
+\* Projected: later than the 28-day reported window. Medians are whole days and can move by one with the random seed.
+
+These effects are not negligible, and they are not the same for every player:
+
+- **Low activity: a material acceleration.** A flat reward is a larger share of a smaller income. For this profile two arrivals a week are the second-largest lever tested, after the personal-goal setting (+30%). The projected finish comes forward by about six days, and by day 28 these players have completed 5.2 regions instead of 4.6.
+- **Moderate and high activity: smaller, and in an unhelpful direction.** The gain is 8% and 7% of income, but these players already run out of content around day 23 and day 19, and the scenario brings that forward by about two days.
+- **Fairness cuts both ways.** The same numbers are the gap between a player who completes two quests a week and one who cannot travel or prefers not to share location.
+- **Everything scales with frequency.** Each weekly arrival is worth about 25 Energy a day, so the effect on income is proportional to how often players complete quests, and that frequency is unknown. For scale, the pilot in this section assumes one verified sponsored visit per participating player per month. That is 176 Energy a month, under 2% of even the Low profile's income.
+
+The Energy a sponsored quest pays is therefore a balancing parameter, to be set against a target game length. It cannot be assumed to be too small to matter. For that reason the experiment in section 6 gives a sponsored quest the same reward as a regular one and tracks regions completed.
 
 ## 4. Strategic risks
 
@@ -73,7 +90,7 @@ What the table says:
 | **Poorly targeted destinations** | An irrelevant quest wastes the slot and teaches players to ignore quests | Limit sponsored quests by distance and category; rank them by observed completion; rotate |
 | **Excessive commercial pressure** | Too many sponsored slots turn a walking game into an ad feed | At most one labelled sponsored slot at a time; frequency caps; a hide option; no quest is ever required for progress |
 | **Merchant ROI uncertainty** | A verified arrival is not a purchase | Start with pay-per-visit and budget caps; report redemptions where the merchant can record them; keep contracts short |
-| **Accessibility and fairness** | Players who cannot travel, live far from sponsors or decline location sharing must not fall behind | Keep quest Energy small next to walking income (7–16% in the scenario above); arrival by any travel mode already counts; no progression gate |
+| **Accessibility and fairness** | Players who cannot travel, live far from sponsors or decline location sharing must not fall behind | Decide how large a gap is acceptable and size quest Energy to it: in the scenario above a player who completes two quests a week earns 7–16% more Energy than one who completes none, about six projected days for the low-activity profile. Arrival by any travel mode already counts, and no quest gates progression |
 | **Monetization undermining the health value** | If rewards favour driving to shops over walking, this stops being a health product | Keep the walking bonus so that walking there pays more than driving; make daily steps a guardrail in the experiment; refuse sponsors that conflict with the health positioning |
 
 ## 5. Recommendation: what to test first
@@ -91,23 +108,49 @@ This holds if visits can be verified well enough to bill on, and if merchants va
 
 **Question.** Does offering optional sponsored destination quests improve meaningful engagement without harming the core health-oriented experience?
 
+The words "without harming" decide how the test has to be built. Finding no statistically significant drop in retention would not show that sponsored quests are harmless, because a test that is too small will usually find no significant difference whether harm exists or not. The primary test is therefore a non-inferiority test against a margin fixed in advance.
+
 | Element | Design |
 |---|---|
-| **Hypothesis** | Players who are offered sponsored quests have higher week-4 retention than players who see only regular quests, with no decline in daily steps or core-loop play |
+| **Hypotheses** | Primary, non-inferiority: week-4 retention among players offered sponsored quests is not lower than among players who see only regular quests by more than a margin Δ fixed before launch. Secondary, superiority: retention is higher. This is read from the same confidence interval, and only once non-inferiority holds. Daily steps and core-loop play are guardrails, not hypotheses |
 | **Eligibility** | Players in the pilot city who have granted location permission, finished onboarding (first step sync and first spin), and have a sponsored location within quest range when they first open the quest screen during the test. The rule is fixed before assignment and applied identically to both groups. Staff and test accounts are excluded |
 | **Randomization unit** | Player account, split 50/50 and assigned once at the first eligible quest-screen open. Stratified by prior-week steps and by new versus existing player |
 | **Control group** | The current game: regular, non-sponsored quests only |
 | **Treatment group** | The same quest screen with the same number of quest slots. At most one slot shows a sponsored quest, labelled as sponsored and dismissible. Its in-game reward equals a regular quest's, so the test measures sponsorship and not a larger reward |
-| **Primary success metric** | Week-4 retention: the share of assigned players with at least one credited step sync on days 22–28 after assignment. Analysed by assignment, whether or not the player ever starts a sponsored quest |
+| **Primary success metric** | Week-4 retention: the share of assigned players with at least one credited step sync on days 22–28 after assignment. Analysed by assignment, whether or not the player ever starts a sponsored quest. The quantity tested is the retention difference, treatment minus control, with a two-sided 95% confidence interval |
 | **Secondary metrics** | Quest participation and verified destination visits per player; D7 retention; active days per week; regions completed; walking-bonus Energy earned; a one-question satisfaction survey. Merchant side, described but not compared between groups: verified visits per quest, redemptions, merchant-reported sales and cost per visit |
-| **Guardrail metrics** | Daily steps per active player; spins per active day; sponsored-quest hide and opt-out rate; location-permission revocations and uninstalls; fraud flags per 100 claims; complaints about advertising. A pre-agreed drop in any of them stops the test |
+| **Guardrail metrics** | Daily steps per active player; spins per active day; sponsored-quest hide and opt-out rate; location-permission revocations and uninstalls; fraud flags per 100 claims; complaints about advertising. Each has a tolerance fixed before launch and is judged the way retention is: by where its confidence interval lies against the tolerance, not by whether the change is statistically significant. Crossing a tolerance stops the test |
 | **Data collection** | An assignment log (player, group, time, stratum); an exposure event when a sponsored quest is actually shown; the quest funnel by quest type (shown, started, verified arrival, claimed); daily step syncs and spins; hide, opt-out and permission changes; survey answers; merchant-side redemption records |
 | **Main confounding factors** | Novelty in the first week; weather, season and holidays, since walking is seasonal; uneven quest density across neighbourhoods; the particular merchants in the pilot; unequal notification volume between groups; spillover between players who walk together; players with more than one account |
 
-**Sample size and duration.** These cannot be computed yet, because no baseline exists. Four things have to be measured first: baseline week-4 retention in the pilot city, the weekly inflow of eligible players, the share of treatment players who are actually shown a sponsored quest, and the smallest retention change that would alter the decision. With those, the usual approximation for comparing two proportions (about 16·p(1−p)/δ² players per group for 80% power at the 5% level) gives the required duration. No effect size is assumed here.
+**The non-inferiority margin.** Proposed starting value: **Δ = 2 percentage points** of week-4 retention. This is a proposal to argue about, not a finding, and no data supports it yet. It has to be justified, agreed and written down before the first player is assigned, and it does not change once data arrive. The justification has to cover four things:
 
-**Decision rule, agreed before the test starts.**
+- **What the product is willing to trade.** The margin is the largest retention loss that would be accepted in exchange for sponsorship revenue. A loss that is real but smaller than the margin passes the test, so it must be a loss the team is prepared to defend. A health product may choose a tighter margin than revenue alone would justify.
+- **The baseline level.** Two points mean different things at different baselines: a tenth of a 20% retention rate, a fifth of a 10% rate. Once the baseline is measured, the margin should also be stated as a share of it.
+- **Dilution.** The comparison is by assignment, so treatment players who are never shown a sponsored quest dilute any harm. If only half of them see one, a 2-point margin on the whole group permits a 4-point loss among those who did.
+- **Whether it can be tested.** A tighter margin needs more players. The hypothetical pilot in section 3 has about 2,000 eligible players at a time, 1,000 per group before new arrivals, and whether that supports a 2-point margin depends on the baseline. If the pilot city cannot supply enough, the options are a longer test, more cities, or a wider margin that is defended as acceptable harm. Widening it only to fit the sample would defeat its purpose.
 
-- **Expand** if no guardrail is breached, week-4 retention in the treatment group is higher than or statistically indistinguishable from control within a pre-set margin, and verified visits per sponsored quest reach the break-even volume of the pricing model in use.
-- **Iterate** on targeting, labelling and frequency if retention holds but hide and opt-out rates are high, or if visits fall short of break-even.
-- **Stop** if retention or daily steps fall.
+**How the result is read.** Take the two-sided 95% confidence interval for the retention difference, treatment minus control:
+
+| Interval | Reading | Action |
+|---|---|---|
+| Entirely above −Δ | Non-inferior: a loss as large as the margin is ruled out. If the interval is also entirely above zero, retention improved | Can expand, subject to the other conditions below |
+| Reaches below −Δ and includes zero | Inconclusive: the data are compatible with no harm and with harm beyond the margin | Do not expand. This is not evidence of safety |
+| Reaches below −Δ and lies entirely below zero | Retention is lower, and a loss beyond the margin cannot be ruled out | Stop |
+
+**Sample size and duration.** These cannot be computed yet, because no baseline exists. For a non-inferiority comparison of two proportions with equal groups, a one-sided 2.5% test and no true difference, the standard approximation is about 15.7·p(1−p)/Δ² players per group for 80% power and 21.0·p(1−p)/Δ² for 90%, where p is baseline retention and both p and Δ are written as proportions (Δ = 0.02 for 2 points). Power here is the chance of clearing a feature that truly does no harm. Two things hold whatever p turns out to be. Halving the margin quadruples the players needed. And if a small real loss is expected, Δ in the formula is replaced by Δ minus that loss, which raises the number quickly. No baseline, effect size or sample size is assumed here.
+
+The baseline data this needs come from a run-in period after launch, in which several weekly cohorts of eligible players are each followed for 28 days with regular quests only:
+
+1. **Baseline week-4 retention** of eligible players under exactly this definition, and how much it varies between weekly cohorts when nothing changes. This gives p, and shows whether the margin is larger than ordinary noise.
+2. **Weekly inflow of eligible players** and the size of the existing eligible base. Duration is the time needed to assign both groups, plus 28 days for the last player assigned, in whole weeks.
+3. **Exposure share:** the proportion of assigned players who would actually be shown a sponsored quest, estimated in the run-in by logging where one would have appeared. This sets the dilution described above.
+4. **The inputs to the margin:** the contribution per player that sponsorship is expected to bring, which stays a forecast until merchants have agreed prices, and the value the product places on a retained player.
+5. **Guardrail baselines:** the mean and variance of daily steps per active player and of spins per active day, and the base rates of permission revocations, uninstalls and fraud flags, to set each tolerance and to confirm that the same sample can detect a breach.
+
+**Decision rule, agreed before the test starts.** There is one analysis, at the planned sample size. The only early stops are guardrail breaches.
+
+- **Expand** only if all three hold: non-inferiority is shown (the whole interval is above −Δ), no guardrail crosses its tolerance, and verified visits per sponsored quest reach the break-even volume of the pricing model in use.
+- **Hold** if the result is inconclusive. A difference that is not statistically significant is not proof of no harm. The test is extended only if an extension was planned in advance. Otherwise the design is revised and run again.
+- **Iterate** on targeting, labelling and frequency if non-inferiority is shown but hide and opt-out rates are high, or visits fall short of break-even.
+- **Stop** if retention is lower and a loss beyond the margin cannot be ruled out, or if any guardrail crosses its tolerance.

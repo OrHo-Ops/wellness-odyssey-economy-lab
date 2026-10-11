@@ -26,7 +26,7 @@ This repository documents that economy as the game implements it, simulates 28 d
 
 ## 2. Game Economy at a Glance
 
-**The core conversion:** 500 steps → 50 Energy → 1 spin → about 50 Progress Points under the illustrative reward table.
+**The core conversion:** 500 steps → 50 Energy → 1 paid spin → 50 Progress Points on average under the illustrative reward table.
 
 | Resource | What it is | Sources | Sinks |
 |---|---|---|---|
@@ -48,13 +48,15 @@ This repository documents that economy as the game implements it, simulates 28 d
 | Energy | +50 | +75 | +100 | +150 | +100 |
 | Coins | +25 | +50 | +100 | +200 | |
 
-**The wheel.** Each spin pays Progress Points from a weighted reward table, with a small chance of a free respin that costs nothing. The production table is confidential and is not reproduced here. The simulation uses this illustrative one instead:
+**The wheel.** Each spin pays Progress Points from a weighted reward table. One wedge is a free respin: it pays nothing, costs no Energy, and the wheel is spun again. The production table is confidential and is not reproduced here. The simulation uses this illustrative one instead:
 
 | Progress Points | 20 | 30 | 50 | 80 | 150 | Free respin |
 |---|---|---|---|---|---|---|
-| Illustrative probability | 22% | 26% | 28% | 16% | 7% | 1% |
+| Illustrative probability per draw | 22% | 26% | 28% | 16% | 7% | 1% |
 
-I built it so that a paid spin returns 50 points on average, the same as its 50-Energy cost, with a standard deviation of 34 points. It is not the game's actual configuration. Point totals and finish dates below depend on it: they move in inverse proportion to the average pay-out, so a table paying 10% more would bring every finish date forward by about 9%. Energy income, cap losses and bonus shares are set by the game's rules and do not depend on the reward table.
+The table has two averages, and the free respin is the difference between them. Over all draws, counting the respin as zero, it pays 49.5 points. A respin is never paid for, so every 50 Energy spent ends on one of the five paying wedges, and the average per paid spin is 49.5 ÷ (1 − 0.01) = 50.0 points, with a standard deviation of 34. I chose the weights so that this equals the 50-Energy cost of a spin: one point per Energy. Every per-spin figure in this README is per paid spin.
+
+This table is not the game's actual configuration. Point totals and finish dates below depend on it: they move in inverse proportion to the average pay-out, so a table paying 10% more would bring every finish date forward by about 9%. Energy income, cap losses and bonus shares are set by the game's rules and do not depend on the reward table.
 
 **Location quests.** The player starts a quest, travels by any mode, and claims it on verified arrival at the destination. The reward is 150 Energy, 100 Coins and one fragment. A walking bonus adds 20% Energy on real steps taken on the way, up to a limit tied to the distance. One quest can be active at a time and each destination pays once. Quests are not sponsored today.
 
@@ -120,14 +122,14 @@ Each synthetic player's steps vary from day to day around the profile average (g
 2. At the app session, convert the day's steps to Energy at 10 to 1. Leftover steps carry over.
 3. Apply the cap to that step Energy: credit up to 500 minus the current balance. The rest is lost.
 4. Add milestone and goal bonuses on top.
-5. Spin while the balance covers a whole 50-Energy spin, drawing each result from the reward table. Spins are whole numbers.
+5. Spin while the balance covers a whole 50-Energy spin, drawing each result from the reward table. Spins are whole numbers. A draw that lands on the free respin is not charged and not counted as a spin: the player draws again.
 6. Carry the remainder to the next day.
 
 **The seven-region limit.** Once the seventh region is complete the game accepts no further spins. The model stops spinning for that player from that moment, while Energy keeps arriving with nothing to spend it on.
 
 **Reported window and projection.** The reported window is 28 days, and every result in this README is measured inside it with one exception. To say when a slower profile would finish, each run continues to day 120 under the same rules and assumptions. A finish day later than 28 is therefore a projection from that longer run, not a 28-day result, and is marked with an asterisk wherever it appears.
 
-**Expected and realized.** Expected points are paid spins × the table's average pay-out. Realized points are drawn spin by spin. The chart shows the average across players and the band from the 10th to the 90th percentile.
+**Expected and realized.** Expected points are paid spins × the average pay-out per paid spin, which is 50.0 under the illustrative table. Realized points are drawn spin by spin. The chart shows the average across players and the band from the 10th to the 90th percentile.
 
 **Scenarios** on the same synthetic players: two app sessions a day, the personal goal set to its 1,000-step minimum, and two quest arrivals a week.
 
@@ -135,8 +137,8 @@ Each synthetic player's steps vary from day to day around the profile average (g
 
 - Hand-calculated days. For example, 10,000 steps in one session must credit 500 Energy, lose 500, add 325 in bonuses and fund 16 spins.
 - The seven-region limit. With a test wheel that always pays 100 points, the 13,385 points must take exactly 134 spins and not one more, however much Energy arrives afterwards.
+- The free respin. With a test wheel that lands on the respin half the time and otherwise pays 100 points, 650 Energy must still buy exactly 13 paid spins, each paying 100. On the illustrative wheel the simulated average must match 50.0 points per paid spin within sampling error, a tolerance tight enough to rule out the 49.5 per draw, and free respins must turn up at the stated 1% of draws.
 - Energy conservation on every simulated player-day.
-- Simulated pay-outs against the table's expected value.
 
 ## 5. Results and Visualizations
 
@@ -150,7 +152,7 @@ Baseline, one app session a day.
 | Credited after the cap | 298 | 462 | 478 |
 | Bonus Energy | 26 | 140 | 265 |
 | **Energy income** | **323** | **602** | **743** |
-| Whole spins | 6.5 | 12.0 | 14.8 |
+| Paid spins | 6.5 | 12.0 | 14.8 |
 | Energy spent on spins | 323 | 601 | 742 |
 | Unspent Energy carried to the next day | 24 | 14 | 22 |
 | Expected Progress Points | 323 | 601 | 742 |
@@ -162,7 +164,7 @@ Baseline, one app session a day.
 | First region complete, median day | 5 | 3 | 3 |
 | All seven complete, median day (10th to 90th percentile) | 42\* (38 to 46) | 23 (21 to 24) | 19 (17 to 20) |
 
-\* Projection past day 28, from the same simulation continued to day 120. Expected points equal Energy spent because the illustrative table returns one point per Energy.
+\* Projection past day 28, from the same simulation continued to day 120. Spins are paid spins: free respins are not counted, here or in the `spins` columns of the output tables. Expected points equal Energy spent because a paid spin costs 50 Energy and returns 50 points on average under the illustrative table.
 
 ![Cumulative Progress Points over 28 days for three synthetic activity profiles](outputs/progression_comparison.png)
 
@@ -203,7 +205,7 @@ Full tables are in [`outputs/`](outputs): the day-by-day ledger, the scenario su
 - **Why it matters.** The goal bonus is a flat 100 Energy whatever goal the player picks, so the highest-paying choice is the lowest goal. That is an accessibility feature for players who need an attainable target, and an invitation to sandbag for everyone else.
 - **What limits it.** Whether players ever change the goal setting is unknown. How much reward a low-activity player needs in order to stay is a retention question this model cannot answer.
 
-**A note on luck.** Under the illustrative table a single spin has a standard deviation of 34 points on a 50-point average, but over a month that washes out. Day-to-day steps and wheel luck together put 80% of Low players within about 11% of the average 28-day total. Finish days are whole days, so a median that sits on a boundary can move by one day with the random seed. Across twelve seeds the baseline median was a projected day 42 for Low, day 23 for Moderate and day 18 or 19 for High, and three of the fifteen scenario medians in section 5 also moved by a day.
+**A note on luck.** Under the illustrative table a single paid spin has a standard deviation of 34 points on a 50-point average, but over a month that washes out. Day-to-day steps and wheel luck together put 80% of Low players within about 11% of the average 28-day total. Finish days are whole days, so a median that sits on a boundary can move by one day with the random seed. Across twelve seeds the baseline median was a projected day 42 for Low, day 23 for Moderate and day 18 or 19 for High, and three of the fifteen scenario medians in section 5 also moved by a day.
 
 ## 7. Product Design Implications
 
@@ -231,7 +233,7 @@ Three pricing models, in a hypothetical one-city pilot of 20 sponsored quests an
 
 **Recommendation:** test cost per verified visit first, with a monthly budget cap for each merchant, then move to the hybrid once volumes are known. Per-visit pricing puts a price on the one thing a merchant is buying, so acceptance of that price is direct evidence of what a visit is worth, and paying only for results is an offer an unproven channel can make. At these placeholder costs it needs about 23 visits per quest per month to break even, which is why it is a test model and not the end state.
 
-In the simulation two quest arrivals a week raise Energy income by 7% to 16%, so quest rewards are too small to distort pacing.
+**Quest rewards are not neutral for pacing.** In the simulation two quest arrivals a week add about 50 Energy a day to every profile, one extra paid spin. Energy income rises by 16% for Low, 8% for Moderate and 7% for High, and the median finish moves from a projected day 42 to a projected day 36 for Low, from day 23 to 21 for Moderate and from day 19 to 17 for High. Because the reward is flat it matters most, in proportion, to low-activity players, and it also shortens a game that active players already finish in three weeks. Both effects grow with how often players complete quests, which is unknown, so how much Energy a sponsored quest pays is a balancing decision.
 
 Full comparison, unit economics and seven strategic risks: [`docs/monetization_and_experiment.md`](docs/monetization_and_experiment.md).
 
@@ -242,9 +244,10 @@ No experiment has been run. This is the design for when the game has real player
 - **Question.** Does offering optional sponsored quests improve meaningful engagement without harming the health-oriented core?
 - **Design.** Player-level 50/50 randomization among eligible players in a pilot city. Control sees regular quests only. Treatment sees the same number of quest slots with at most one labelled sponsored quest carrying the same in-game reward.
 - **Primary metric.** Week-4 retention: at least one credited step sync on days 22 to 28 after assignment.
-- **Guardrails.** Daily steps per active player, spins per active day, sponsored-quest hide rate, location-permission revocations and fraud flags.
-- **Sample size.** Not computed, because there is no baseline. The document lists the four measurements needed first.
-- **Decision rule.** Expand only if no guardrail is breached, retention is not lower, and verified visits per quest reach the pricing model's break-even.
+- **Test.** Non-inferiority first. The 95% confidence interval for the retention difference, treatment minus control, must rule out a loss larger than a margin fixed before launch. I propose 2 percentage points as the starting value. It is a proposal, not a finding, and it has to be justified and agreed before the first player is assigned.
+- **Guardrails.** Daily steps per active player, spins per active day, sponsored-quest hide rate, location-permission revocations and fraud flags, each with a tolerance set in advance.
+- **Sample size.** Not computed, because there is no baseline. The document gives the formula and lists the five kinds of baseline data a run-in period has to supply first.
+- **Decision rule.** Expand only if non-inferiority is shown, no guardrail is breached, and verified visits per quest reach the pricing model's break-even. A retention difference that is merely not significant counts as inconclusive, not as proof of no harm.
 
 Full design, including eligibility, confounders and data requirements: [`docs/monetization_and_experiment.md`](docs/monetization_and_experiment.md#6-proposed-post-launch-ab-experiment).
 

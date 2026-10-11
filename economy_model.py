@@ -116,8 +116,10 @@ class Economy:
     def ev_per_paid_spin(self) -> float:
         """Expected Progress Points per spin actually paid for.
 
-        A free respin charges nothing, so the player draws again on the same
-        Energy. Every paid spin therefore ends on a paying wedge.
+        A free respin pays nothing and charges nothing, and the player draws
+        again on the same Energy. Every spin that is paid for therefore ends
+        on a paying wedge, so its average is the per-draw average divided by
+        the share of draws that pay: ev_per_draw / (1 - p_respin).
         """
         return self.ev_per_draw / (1.0 - self.wheel_probs[-1])
 
@@ -150,12 +152,14 @@ def simulate(
          credited; the rest is lost. Milestone and goal bonuses are then added
          on top, outside the cap.
       4. The player spins while the balance covers a whole spin. Spins are
-         whole numbers. A free respin charges nothing.
+         whole numbers. A free respin pays nothing, charges nothing and is
+         followed by another draw.
       5. Whatever is left carries to the next session.
     Once the last region is complete the game accepts no further spins, so
     spinning stops for good while Energy keeps arriving.
 
-    Returns arrays shaped (days, n_players).
+    Returns arrays shaped (days, n_players). "spins" counts paid spins only;
+    free respin draws are counted separately in "respins".
     """
     cap = econ.bank_cap if bank_cap is None else bank_cap
     goal = econ.goal_steps if goal_steps is None else goal_steps
@@ -169,7 +173,7 @@ def simulate(
     leftover_steps = np.zeros(n_players, dtype=np.int64)
     points = np.zeros(n_players, dtype=np.int64)
     coins = np.full(n_players, econ.starting_coins, dtype=np.int64)
-    fields = ("steps", "carry_in", "converted", "lost", "credited", "bonus", "spins", "carry_out",
+    fields = ("steps", "carry_in", "converted", "lost", "credited", "bonus", "spins", "respins", "carry_out",
               "pp", "pp_cum", "coins", "goal_reached", "first_milestone")
     out = {name: np.zeros((days, n_players), dtype=np.int64) for name in fields}
 
@@ -216,7 +220,9 @@ def simulate(
             out["bonus"][day] += bonus
 
             # Spin: whole spins only, each a uniform roll against the cumulative
-            # weights. Nobody spins once their last region is complete.
+            # weights. A roll on the free respin is not charged and not counted
+            # as a spin: the player rolls again. Nobody spins once their last
+            # region is complete.
             while True:
                 can_spin = np.flatnonzero((balance >= econ.spin_cost) & (points < econ.circuit_total))
                 if can_spin.size == 0:
@@ -226,6 +232,7 @@ def simulate(
                 balance[paying] -= econ.spin_cost
                 points[can_spin] += econ.wheel_points[wedge]
                 out["spins"][day, paying] += 1
+                out["respins"][day, can_spin[wedge == respin]] += 1
                 out["pp"][day, can_spin] += econ.wheel_points[wedge]
 
         out["carry_out"][day] = balance
@@ -375,7 +382,14 @@ def run_checks(econ: Economy, a: dict[str, float]) -> None:
     assert econ.region_costs.tolist() == [1500, 1620, 1750, 1890, 2041, 2204, 2380]
     assert econ.circuit_total == 13385
     assert abs(econ.wheel_probs.sum() - 1) < 1e-12 and econ.wheel_points[-1] == 0
-    assert abs(econ.ev_per_paid_spin * (1 - econ.wheel_probs[-1]) - econ.ev_per_draw) < 1e-9
+
+    # Free respin: a paid spin always ends on a paying wedge, so its average must equal the
+    # average over the paying wedges alone. Computed here without using ev_per_paid_spin.
+    paying_points = econ.wheel_points[:-1].astype(float)
+    paying_probs = econ.wheel_probs[:-1] / econ.wheel_probs[:-1].sum()
+    respin_prob = float(econ.wheel_probs[-1])
+    assert abs(float(paying_points @ paying_probs) - econ.ev_per_paid_spin) < 1e-9
+    assert econ.ev_per_paid_spin >= econ.ev_per_draw
 
     def steady(mean_steps: int, sessions: int = 1, **kwargs) -> dict[str, np.ndarray]:
         """Four identical players who walk exactly `mean_steps` every day for three days."""
@@ -410,6 +424,15 @@ def run_checks(econ: Economy, a: dict[str, float]) -> None:
     run = steady(2000, quests_per_week=7, quest_walk_steps=1300)
     assert (run["bonus"] == 176).all() and (np.diff(run["coins"], axis=0) == 100).all()
 
+    # Free respins in the simulation, with a wheel that lands on the respin half the time and
+    # otherwise pays 100. A respin is never charged and never counted as a spin, so 650 Energy
+    # still buys exactly 13 paid spins and every one of them pays: 1,300 points a day.
+    respin_wheel = replace(econ, wheel_points=np.array([100, 0]), wheel_probs=np.array([0.5, 0.5]))
+    assert respin_wheel.ev_per_draw == 50 and respin_wheel.ev_per_paid_spin == 100
+    run = simulate(respin_wheel, 5000, days=3, n_players=400, seed=5, step_cv=0.0)
+    assert (run["spins"] == 13).all() and (run["pp"] == 1300).all() and (run["carry_out"] == 0).all()
+    assert abs(run["respins"].sum() / run["spins"].sum() - 1) < 0.1  # one free respin per paid spin on average
+
     # The seven-region limit, with a wheel that always pays exactly 100 points.
     # 133 spins leave 85 points to go, so the 134th spin is allowed and finishes
     # the last region. Its 15 surplus points are not progress, and no spin
@@ -440,9 +463,17 @@ def run_checks(econ: Economy, a: dict[str, float]) -> None:
     finished_before = np.vstack([np.zeros_like(playing[:1]), ~playing[:-1]])
     assert (run["spins"][finished_before] == 0).all()  # no spins once the last region is complete
 
-    # Realised wheel pay-outs agree with the expected value (first week: nobody has finished).
+    # Realised wheel pay-outs in the first week, when nobody has finished and every roll is a
+    # plain draw. The average per paid spin must match ev_per_paid_spin within four standard
+    # errors. With the published table that is about a quarter of a point, half the gap to the
+    # per-draw average, so charging for respins would fail here. Free respins must also turn up
+    # at their stated rate.
     assert playing[:7].all()
-    assert abs(run["pp"][:7].sum() / run["spins"][:7].sum() / econ.ev_per_paid_spin - 1) < 0.01
+    spins, respins, points = (int(run[name][:7].sum()) for name in ("spins", "respins", "pp"))
+    spread = float(np.sqrt(paying_points**2 @ paying_probs - econ.ev_per_paid_spin**2))
+    assert abs(points / spins - econ.ev_per_paid_spin) <= 4 * spread / np.sqrt(spins) + 1e-9
+    draws = spins + respins
+    assert abs(respins / draws - respin_prob) <= 4 * np.sqrt(respin_prob * (1 - respin_prob) / draws) + 1e-9
 
     # Unit economics: contribution adds up, and each model charges what it says.
     for row in unit_economics(a):
@@ -674,7 +705,8 @@ def main() -> None:
     chart_progression(ledgers, summaries, a, econ, OUT / "progression_comparison.png")
     chart_sensitivity(sensitivity_rows, a, econ, OUT / "sensitivity_analysis.png")
 
-    print(f"Illustrative wheel: {econ.ev_per_paid_spin:.2f} points per paid spin. "
+    print(f"Illustrative wheel: {econ.ev_per_draw:.2f} points per draw, {econ.ev_per_paid_spin:.2f} per paid spin "
+          f"(free respins are {econ.wheel_probs[-1]:.1%} of draws). "
           f"All {len(econ.region_costs)} regions: {econ.circuit_total:,} points.")
     header = ("Profile", "Energy/day", "Lost to cap", "Spins/day", f"Points, day {days}", "Finish day")
     print(f"{header[0]:<10}{header[1]:>11}{header[2]:>13}{header[3]:>11}{header[4]:>16}{header[5]:>12}")
