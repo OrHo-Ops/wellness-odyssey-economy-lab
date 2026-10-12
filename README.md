@@ -297,4 +297,4 @@ The script runs its checks, simulates every scenario and rewrites everything in 
 
 To try a what-if, change a value in `assumptions.csv` and run again. If you change a row marked `verified`, add `--skip-checks`: the hand-calculated checks describe the game's actual rules.
 
-*AI assistance: I built this case study with Claude (Anthropic), which wrote most of the simulation code and drafted the text from my game's rules and my brief.*
+*AI assistance: I built this case study with Claude (Anthropic). Claude wrote the simulation code and drafted the text from my game's rules and my brief; I set the questions, reviewed the results and directed the corrections.*
